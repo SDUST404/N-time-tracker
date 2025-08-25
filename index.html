@@ -6,8 +6,13 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>웹 기반 타임 트래커</h1>
-  <div id="tracker"></div>
+  <div class="form">
+    <input type="text" id="task" placeholder="할 일 입력">
+    <input type="time" id="start" value="06:00">
+    <input type="time" id="end" value="07:00">
+    <button id="add">추가</button>
+  </div>
+  <div id="table-container"></div>
   <script src="script.js"></script>
 </body>
 </html>
