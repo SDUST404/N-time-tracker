@@ -75,40 +75,49 @@ function renderTask(taskObj) {
   const startTotal = sh * 60 + sm;
   const endTotal = eh * 60 + em;
 
-  let firstCell = null;
-  let colspan = 0;
+  let cells = [];
 
   for (let t = startTotal; t < endTotal; t += 10) {
     let hour = Math.floor(t / 60);
     let minute = t % 60;
 
-    // 60분은 다음 시간의 0분으로 처리
+    // 60분 처리 → 다음 시간 0분
     if (minute === 60) {
       hour += 1;
       minute = 0;
     }
 
+    // 가장 가까운 10분 단위로 올림
     const roundedMinute = minutes.find(m => minute <= m);
-    if (roundedMinute === undefined) continue;
+    if (roundedMinute === undefined || roundedMinute > 60) continue;
 
-    const cell = tbody.querySelector(`td[data-hour="${hour}"][data-minute="${roundedMinute}"]`);
-    if (!cell) continue;
-
-    if (!firstCell) {
-      firstCell = cell;
-      colspan = 1;
-    } else {
-      cell.style.display = "none";
-      colspan++;
+    // minute == 60 이면 다음 시간의 0분 셀
+    let targetHour = hour;
+    let targetMinute = roundedMinute;
+    if (roundedMinute === 60) {
+      targetHour += 1;
+      targetMinute = 10;
     }
+
+    const cell = tbody.querySelector(`td[data-hour="${targetHour}"][data-minute="${targetMinute}"]`);
+    if (cell) cells.push(cell);
   }
 
-  if (firstCell) {
-    firstCell.colSpan = colspan;
-    firstCell.textContent = task;
-    firstCell.title = `${task} (${start}~${end})`;
-    firstCell.style.background = color || hashColor(task);
-    firstCell.style.display = "";
+  if (cells.length === 0) return;
+
+  const firstCell = cells[0];
+  const colspan = cells.length;
+
+  // 병합 셀 세팅
+  firstCell.colSpan = colspan;
+  firstCell.textContent = task;
+  firstCell.title = `${task} (${start}~${end})`;
+  firstCell.style.background = color || hashColor(task);
+  firstCell.style.display = "";
+
+  // 나머지 셀 숨기기
+  for (let i = 1; i < cells.length; i++) {
+    cells[i].style.display = "none";
   }
 }
 
