@@ -16,7 +16,7 @@ body {
 
 table {
   border-collapse: collapse;
-  margin: 0 auto; /* 중앙 정렬 */
+  margin: 0 auto;
 }
 
 th, td {
@@ -48,7 +48,6 @@ td {
   vertical-align: middle;
 }
 
-/* 토글 목록 스타일 */
 #task-list-container div {
   margin: 3px 0;
   display: flex;
@@ -62,4 +61,3 @@ td {
   padding: 2px 5px;
   cursor: pointer;
 }
-
