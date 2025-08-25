@@ -118,3 +118,4 @@ document.getElementById("add").addEventListener("click",()=>{
   tasks.push(obj);
   saveAndRender();
 });
+
