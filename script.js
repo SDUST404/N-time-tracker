@@ -1,65 +1,57 @@
 const container = document.getElementById("table-container");
-
-// 페이지별 고유 key (Notion 페이지 ID 등을 활용 가능)
 const pageKey = location.pathname || "default_page";
 
-// 시간 범위
 const startHour = 6;
 const endHour = 24;
 const minutes = [10,20,30,40,50,60];
 
-// 표 생성
-function createTable() {
+function createTable(){
   const table = document.createElement("table");
-
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
-  // 왼쪽 위 빈칸 회색
+  // 왼쪽 위 코너
   const corner = document.createElement("th");
-  corner.style.background = "#ddd";
+  corner.style.background="#ddd";
   headerRow.appendChild(corner);
 
-  minutes.forEach(m => {
+  minutes.forEach(m=>{
     const th = document.createElement("th");
-    th.className = "minute-col";
-    th.textContent = m.toString().padStart(2,"0");
+    th.className="minute-col";
+    th.textContent=m.toString().padStart(2,"0");
     headerRow.appendChild(th);
   });
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
-  const tbody = document.createElement("tbody");
-  for(let h=startHour; h<endHour; h++){
-    const row = document.createElement("tr");
-
-    const th = document.createElement("th");
-    th.className = "time-col";
-    th.textContent = `${h}:00`;
+  const tbody=document.createElement("tbody");
+  for(let h=startHour;h<endHour;h++){
+    const row=document.createElement("tr");
+    const th=document.createElement("th");
+    th.className="time-col";
+    th.textContent=`${h}:00`;
     row.appendChild(th);
 
     minutes.forEach(m=>{
-      const td = document.createElement("td");
-      td.dataset.hour = h;
-      td.dataset.minute = m;
+      const td=document.createElement("td");
+      td.dataset.hour=h;
+      td.dataset.minute=m;
       row.appendChild(td);
     });
 
     tbody.appendChild(row);
   }
+
   table.appendChild(tbody);
-  container.innerHTML = "";
+  container.innerHTML="";
   container.appendChild(table);
   return tbody;
 }
 
-const tbody = createTable();
+let tbody=createTable();
+let tasks=JSON.parse(localStorage.getItem(pageKey)||"[]");
 
-// localStorage에서 데이터 불러오기
-let tasks = JSON.parse(localStorage.getItem(pageKey) || "[]");
-
-// 색상 함수 (기본)
-function hashColor(text) {
+function hashColor(text){
   let hash=0;
   for(let i=0;i<text.length;i++){
     hash=text.charCodeAt(i)+((hash<<5)-hash);
@@ -68,41 +60,39 @@ function hashColor(text) {
   return `hsl(${hue},40%,70%)`;
 }
 
-// 일정 렌더링
 function renderTask(taskObj){
-  const {task,start,end,color} = taskObj;
-  const [sh, sm] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
+  const {task,start,end,color}=taskObj;
+  const [sh,sm]=start.split(":").map(Number);
+  const [eh,em]=end.split(":").map(Number);
 
-  const cells = Array.from(tbody.querySelectorAll("td"));
-  const startIndex = (sh-startHour)*6 + Math.floor(sm/10);
-  const endIndex = (eh-startHour)*6 + Math.floor(em/10);
-  const colspan = endIndex - startIndex;
-
+  const cells=Array.from(tbody.querySelectorAll("td"));
+  const startIndex=(sh-startHour)*6 + Math.floor(sm/10);
+  const endIndex=(eh-startHour)*6 + Math.floor(em/10);
+  const colspan=endIndex-startIndex;
   if(colspan<=0) return;
 
-  const firstCell = cells[startIndex];
-  firstCell.textContent = task;
-  firstCell.style.background = color || hashColor(task);
-  firstCell.colSpan = colspan;
+  const firstCell=cells[startIndex];
+  firstCell.textContent=task;
+  firstCell.style.background=color||hashColor(task);
+  firstCell.colSpan=colspan;
 
-  // 나머지 범위 셀 제거
-  for(let i=startIndex+1; i<endIndex; i++){
-    const cell = cells[i];
-    cell.style.display = "none";
+  // 나머지 셀 숨기기
+  for(let i=startIndex+1;i<endIndex;i++){
+    const cell=cells[i];
+    cell.style.display="none";
   }
 
-  // 클릭하면 수정/삭제
-  firstCell.onclick = () => {
-    const newTask = prompt("할 일 수정:", task);
+  // 수정/삭제
+  firstCell.onclick=()=>{
+    const newTask=prompt("할 일 수정:",task);
     if(newTask===null) return;
-    const newColor = prompt("색상 코드 입력:", color || "#88c0d0");
-    if(newTask==="") {
-      tasks = tasks.filter(t=>t!==taskObj);
+    const newColor=prompt("색상 코드 입력:",color||"#88c0d0");
+    if(newTask===""){
+      tasks=tasks.filter(t=>t!==taskObj);
       saveAndRender();
     } else {
-      taskObj.task = newTask;
-      taskObj.color = newColor || color;
+      taskObj.task=newTask;
+      taskObj.color=newColor||color;
       saveAndRender();
     }
   }
@@ -110,23 +100,21 @@ function renderTask(taskObj){
 
 function saveAndRender(){
   localStorage.setItem(pageKey,JSON.stringify(tasks));
-  createTable(); // 표 재생성
+  tbody=createTable();
   tasks.forEach(renderTask);
 }
 
-// 초기 렌더링
 tasks.forEach(renderTask);
 
-// 추가 버튼
 document.getElementById("add").addEventListener("click",()=>{
-  const task = document.getElementById("task").value.trim();
-  const start = document.getElementById("start").value;
-  const end = document.getElementById("end").value;
-  const color = document.getElementById("color").value;
+  const task=document.getElementById("task").value.trim();
+  const start=document.getElementById("start").value;
+  const end=document.getElementById("end").value;
+  const color=document.getElementById("color").value;
 
-  if(!task || !start || !end){ alert("모든 항목 입력!"); return; }
+  if(!task||!start||!end){ alert("모든 항목 입력!"); return; }
 
-  const obj = {task,start,end,color};
+  const obj={task,start,end,color};
   tasks.push(obj);
   saveAndRender();
 });
