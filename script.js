@@ -94,29 +94,27 @@ function saveAndRender(){
   renderTaskList();
 }
 
-function renderTaskList(){
-  taskListContainer.innerHTML="";
-  tasks.forEach((t,i)=>{
-    const div=document.createElement("div");
-    const span=document.createElement("span");
-    span.textContent=`${t.task} (${t.start}~${t.end})`;
+function renderTask(taskObj){
+  const {task,start,end,color}=taskObj;
+  const [sh,sm]=start.split(":").map(Number);
+  const [eh,em]=end.split(":").map(Number);
 
-    const editBtn=document.createElement("button");
-    editBtn.textContent="수정";
-    editBtn.onclick=()=>{
-      const newTask=prompt("할 일 수정:", t.task);
-      if(newTask===null) return;
-      const newStart=prompt("시작 시간 수정:", t.start);
-      const newEnd=prompt("종료 시간 수정:", t.end);
-      const newColor=prompt("색상 코드 입력:", t.color||"#88c0d0");
-      if(newTask && newStart && newEnd){
-        t.task=newTask;
-        t.start=newStart;
-        t.end=newEnd;
-        t.color=newColor||t.color;
-        saveAndRender();
-      }
-    }
+  const cells=Array.from(tbody.querySelectorAll("td"));
+  const startIndex = Math.floor(timeToIndex(sh,sm));
+  const endIndex = Math.ceil(timeToIndex(eh,em));
+  const colspan = endIndex - startIndex;
+  if(colspan <=0) return;
+
+  const firstCell = cells[startIndex];
+  firstCell.textContent = task;
+  firstCell.style.background = color||hashColor(task);
+  firstCell.colSpan = colspan;
+
+  for(let i=startIndex+1;i<endIndex;i++){
+    const cell = cells[i];
+    cell.style.display="none";
+  }
+}
 
     const deleteBtn=document.createElement("button");
     deleteBtn.textContent="삭제";
