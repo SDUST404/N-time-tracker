@@ -1,31 +1,36 @@
 const container = document.getElementById("table-container");
 
+// 페이지별 고유 key (Notion 페이지 ID 등을 활용 가능)
+const pageKey = location.pathname || "default_page";
+
 // 시간 범위
 const startHour = 6;
 const endHour = 24;
-const minutes = Array.from({ length: 6 }, (_, i) => i * 10); // 0,10,20,30,40,50
+const minutes = [10,20,30,40,50,60];
 
 // 표 생성
 function createTable() {
   const table = document.createElement("table");
 
-  // 헤더
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
+
+  // 왼쪽 위 빈칸 회색
   const corner = document.createElement("th");
+  corner.style.background = "#ddd";
   headerRow.appendChild(corner);
+
   minutes.forEach(m => {
     const th = document.createElement("th");
     th.className = "minute-col";
-    th.textContent = m.toString().padStart(2, "0");
+    th.textContent = m.toString().padStart(2,"0");
     headerRow.appendChild(th);
   });
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
-  // 바디
   const tbody = document.createElement("tbody");
-  for (let h = startHour; h < endHour; h++) {
+  for(let h=startHour; h<endHour; h++){
     const row = document.createElement("tr");
 
     const th = document.createElement("th");
@@ -33,7 +38,7 @@ function createTable() {
     th.textContent = `${h}:00`;
     row.appendChild(th);
 
-    minutes.forEach(m => {
+    minutes.forEach(m=>{
       const td = document.createElement("td");
       td.dataset.hour = h;
       td.dataset.minute = m;
@@ -43,67 +48,85 @@ function createTable() {
     tbody.appendChild(row);
   }
   table.appendChild(tbody);
-
-  container.innerHTML = ""; // 초기화
+  container.innerHTML = "";
   container.appendChild(table);
   return tbody;
 }
 
 const tbody = createTable();
 
-// 색상 함수
+// localStorage에서 데이터 불러오기
+let tasks = JSON.parse(localStorage.getItem(pageKey) || "[]");
+
+// 색상 함수 (기본)
 function hashColor(text) {
-  let hash = 0;
-  for (let i = 0; i < text.length; i++) {
-    hash = text.charCodeAt(i) + ((hash << 5) - hash);
+  let hash=0;
+  for(let i=0;i<text.length;i++){
+    hash=text.charCodeAt(i)+((hash<<5)-hash);
   }
-  const hue = Math.abs(hash) % 360;
-  return `hsl(${hue}, 40%, 70%)`;
+  const hue=Math.abs(hash)%360;
+  return `hsl(${hue},40%,70%)`;
 }
 
-// 일정 반영 함수
-function renderTask(task, sh, sm, eh, em) {
-  const cells = Array.from(tbody.querySelectorAll("td"));
-  const startIndex = (sh - startHour) * 6 + Math.floor(sm / 10);
-  const endIndex = (eh - startHour) * 6 + Math.floor(em / 10);
+// 일정 렌더링
+function renderTask(taskObj){
+  const {task,start,end,color} = taskObj;
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
 
-  for (let i = startIndex; i < endIndex; i++) {
+  const cells = Array.from(tbody.querySelectorAll("td"));
+  const startIndex = (sh-startHour)*6 + Math.floor(sm/10);
+  const endIndex = (eh-startHour)*6 + Math.floor(em/10);
+  const colspan = endIndex - startIndex;
+
+  if(colspan<=0) return;
+
+  const firstCell = cells[startIndex];
+  firstCell.textContent = task;
+  firstCell.style.background = color || hashColor(task);
+  firstCell.colSpan = colspan;
+
+  // 나머지 범위 셀 제거
+  for(let i=startIndex+1; i<endIndex; i++){
     const cell = cells[i];
-    if (cell) {
-      cell.textContent = task;
-      cell.style.background = hashColor(task);
+    cell.style.display = "none";
+  }
+
+  // 클릭하면 수정/삭제
+  firstCell.onclick = () => {
+    const newTask = prompt("할 일 수정:", task);
+    if(newTask===null) return;
+    const newColor = prompt("색상 코드 입력:", color || "#88c0d0");
+    if(newTask==="") {
+      tasks = tasks.filter(t=>t!==taskObj);
+      saveAndRender();
+    } else {
+      taskObj.task = newTask;
+      taskObj.color = newColor || color;
+      saveAndRender();
     }
   }
 }
 
+function saveAndRender(){
+  localStorage.setItem(pageKey,JSON.stringify(tasks));
+  createTable(); // 표 재생성
+  tasks.forEach(renderTask);
+}
+
+// 초기 렌더링
+tasks.forEach(renderTask);
+
 // 추가 버튼
-document.getElementById("add").addEventListener("click", () => {
+document.getElementById("add").addEventListener("click",()=>{
   const task = document.getElementById("task").value.trim();
   const start = document.getElementById("start").value;
   const end = document.getElementById("end").value;
+  const color = document.getElementById("color").value;
 
-  if (!task || !start || !end) {
-    alert("모든 항목을 입력하세요.");
-    return;
-  }
+  if(!task || !start || !end){ alert("모든 항목 입력!"); return; }
 
-  const [sh, sm] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
-
-  renderTask(task, sh, sm, eh, em);
-
-  // 저장
-  const data = JSON.parse(localStorage.getItem("tasks") || "[]");
-  data.push({ task, start, end });
-  localStorage.setItem("tasks", JSON.stringify(data));
-});
-
-// 로드 시 기존 일정 표시
-window.addEventListener("load", () => {
-  const data = JSON.parse(localStorage.getItem("tasks") || "[]");
-  data.forEach(({ task, start, end }) => {
-    const [sh, sm] = start.split(":").map(Number);
-    const [eh, em] = end.split(":").map(Number);
-    renderTask(task, sh, sm, eh, em);
-  });
+  const obj = {task,start,end,color};
+  tasks.push(obj);
+  saveAndRender();
 });
