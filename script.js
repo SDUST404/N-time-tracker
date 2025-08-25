@@ -2,8 +2,7 @@ const container = document.getElementById("table-container");
 const taskListContainer = document.getElementById("task-list-container");
 const toggleBtn = document.getElementById("toggle");
 
-// 🔹 Notion 페이지별 독립 저장
-// iframe URL에 ?id=페이지ID 를 붙여서 사용
+// Notion 페이지별 독립 저장
 const urlParams = new URLSearchParams(window.location.search);
 const pageKey = urlParams.get("id") || "default_page";
 
@@ -13,8 +12,11 @@ const minutes = [10,20,30,40,50,60];
 
 let tasks = JSON.parse(localStorage.getItem(pageKey)||"[]");
 
-function createTable(){
-  const table = document.createElement("table");
+let table, tbody;
+
+// table 한 번만 생성
+function initTable(){
+  table = document.createElement("table");
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
@@ -31,7 +33,7 @@ function createTable(){
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
-  const tbody=document.createElement("tbody");
+  tbody=document.createElement("tbody");
   for(let h=startHour;h<endHour;h++){
     const row=document.createElement("tr");
     const th=document.createElement("th");
@@ -52,7 +54,6 @@ function createTable(){
   table.appendChild(tbody);
   container.innerHTML="";
   container.appendChild(table);
-  return tbody;
 }
 
 function hashColor(text){
@@ -91,9 +92,15 @@ function renderTask(taskObj){
   }
 }
 
+// tbody만 갱신
 function saveAndRender(){
   localStorage.setItem(pageKey,JSON.stringify(tasks));
-  tbody = createTable();
+  tbody.querySelectorAll("td").forEach(td=>{
+    td.textContent="";
+    td.style.background="white";
+    td.style.display="";
+    td.colSpan=1;
+  });
   tasks.forEach(renderTask);
   renderTaskList();
 }
@@ -115,48 +122,4 @@ function renderTaskList(){
       const newColor=prompt("색상 코드 입력:", t.color||"#88c0d0");
       if(newTask && newStart && newEnd){
         t.task=newTask;
-        t.start=newStart;
-        t.end=newEnd;
-        t.color=newColor||t.color;
-        saveAndRender();
-      }
-    }
-
-    const deleteBtn=document.createElement("button");
-    deleteBtn.textContent="삭제";
-    deleteBtn.onclick=()=>{
-      tasks.splice(i,1);
-      saveAndRender();
-    }
-
-    div.appendChild(span);
-    div.appendChild(editBtn);
-    div.appendChild(deleteBtn);
-    taskListContainer.appendChild(div);
-  });
-}
-
-// toggle 버튼
-toggleBtn.addEventListener("click", ()=>{
-  taskListContainer.style.display = taskListContainer.style.display==="none" ? "block" : "none";
-});
-
-const addBtn = document.getElementById("add");
-addBtn.addEventListener("click", ()=>{
-  const task = document.getElementById("task").value.trim();
-  const start = document.getElementById("start").value;
-  const end = document.getElementById("end").value;
-  const color = document.getElementById("color").value;
-
-  if(!task || !start || !end){ alert("모든 항목 입력!"); return; }
-
-  const obj = {task,start,end,color};
-  tasks.push(obj);
-  saveAndRender();
-
-  document.getElementById("task").value = "";
-});
-
-let tbody = createTable();
-tasks.forEach(renderTask);
-renderTaskList();
+        t.start=
