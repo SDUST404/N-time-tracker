@@ -1,35 +1,49 @@
 body {
   font-family: sans-serif;
   background: #f0f0f0;
-  color: #333;
-  text-align: center;
   margin: 0;
   padding: 20px;
+  color: #333;
+  text-align: center;
 }
 
-h1 {
-  color: #555;
+.form {
   margin-bottom: 20px;
 }
 
-#tracker {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 4px;
-  max-width: 900px;
-  margin: 0 auto;
+#table-container {
+  overflow-x: auto;
 }
 
-.cell {
-  background: #ddd;
-  border-radius: 6px;
-  padding: 10px;
-  min-height: 40px;
-  cursor: pointer;
+table {
+  border-collapse: collapse;
+  margin: 0 auto;
+  background: white;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  text-align: center;
+  padding: 4px;
+  min-width: 40px;
+  height: 30px;
   font-size: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+}
+
+th.time-col {
+  background: #ddd;
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+th.minute-col {
+  background: #ddd;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+td {
+  background: white;
 }
