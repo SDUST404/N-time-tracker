@@ -185,13 +185,13 @@ toggleBtn.addEventListener("click", () => {
 });
 
 document.getElementById("add").addEventListener("click", () => {
-  const task = document.getElementById("task").value.trim();
+  const task = document.getElementById("task").value;
   const start = document.getElementById("start").value;
   const end = document.getElementById("end").value;
   const color = document.getElementById("color").value;
 
-  if (!task || !start || !end) {
-    alert("모든 항목 입력!");
+  if (task === "" || start === "" || end === "") {
+    alert("할일 입력");
     return;
   }
 
