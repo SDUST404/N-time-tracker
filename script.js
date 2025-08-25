@@ -10,7 +10,6 @@ function createTable(){
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
-  // 왼쪽 위 코너
   const corner = document.createElement("th");
   corner.style.background="#ddd";
   headerRow.appendChild(corner);
@@ -76,25 +75,9 @@ function renderTask(taskObj){
   firstCell.style.background=color||hashColor(task);
   firstCell.colSpan=colspan;
 
-  // 나머지 셀 숨기기
   for(let i=startIndex+1;i<endIndex;i++){
     const cell=cells[i];
     cell.style.display="none";
-  }
-
-  // 수정/삭제
-  firstCell.onclick=()=>{
-    const newTask=prompt("할 일 수정:",task);
-    if(newTask===null) return;
-    const newColor=prompt("색상 코드 입력:",color||"#88c0d0");
-    if(newTask===""){
-      tasks=tasks.filter(t=>t!==taskObj);
-      saveAndRender();
-    } else {
-      taskObj.task=newTask;
-      taskObj.color=newColor||color;
-      saveAndRender();
-    }
   }
 }
 
@@ -106,16 +89,28 @@ function saveAndRender(){
 
 tasks.forEach(renderTask);
 
-document.getElementById("add").addEventListener("click",()=>{
-  const task=document.getElementById("task").value.trim();
-  const start=document.getElementById("start").value;
-  const end=document.getElementById("end").value;
-  const color=document.getElementById("color").value;
+const addBtn = document.getElementById("add");
+const deleteBtn = document.getElementById("delete");
 
-  if(!task||!start||!end){ alert("모든 항목 입력!"); return; }
+addBtn.addEventListener("click", ()=>{
+  const task = document.getElementById("task").value.trim();
+  const start = document.getElementById("start").value;
+  const end = document.getElementById("end").value;
+  const color = document.getElementById("color").value;
 
-  const obj={task,start,end,color};
+  if(!task || !start || !end){ alert("모든 항목 입력!"); return; }
+
+  const obj = {task,start,end,color};
   tasks.push(obj);
   saveAndRender();
+
+  document.getElementById("task").value = "";
 });
 
+// 삭제 버튼: 마지막 일정 삭제
+deleteBtn.addEventListener("click", ()=>{
+  if(tasks.length===0){ alert("삭제할 일정이 없습니다."); return; }
+  const removed = tasks.pop();
+  saveAndRender();
+  alert(`삭제됨: ${removed.task}`);
+});
