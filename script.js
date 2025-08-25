@@ -1,9 +1,13 @@
 const container = document.getElementById("table-container");
 const pageKey = location.pathname || "default_page";
+const taskListContainer = document.getElementById("task-list-container");
+const toggleBtn = document.getElementById("toggle");
 
 const startHour = 6;
 const endHour = 24;
 const minutes = [10,20,30,40,50,60];
+
+let tasks = JSON.parse(localStorage.getItem(pageKey)||"[]");
 
 function createTable(){
   const table = document.createElement("table");
@@ -47,9 +51,6 @@ function createTable(){
   return tbody;
 }
 
-let tbody=createTable();
-let tasks=JSON.parse(localStorage.getItem(pageKey)||"[]");
-
 function hashColor(text){
   let hash=0;
   for(let i=0;i<text.length;i++){
@@ -85,12 +86,58 @@ function saveAndRender(){
   localStorage.setItem(pageKey,JSON.stringify(tasks));
   tbody=createTable();
   tasks.forEach(renderTask);
+  renderTaskList();
 }
 
-tasks.forEach(renderTask);
+// 토글용 리스트
+function renderTaskList(){
+  taskListContainer.innerHTML="";
+  tasks.forEach((t,i)=>{
+    const div=document.createElement("div");
+    const span=document.createElement("span");
+    span.textContent=`${t.task} (${t.start}~${t.end})`;
+
+    const editBtn=document.createElement("button");
+    editBtn.textContent="수정";
+    editBtn.onclick=()=>{
+      const newTask=prompt("할 일 수정:", t.task);
+      if(newTask===null) return;
+      const newStart=prompt("시작 시간 수정:", t.start);
+      const newEnd=prompt("종료 시간 수정:", t.end);
+      const newColor=prompt("색상 코드 입력:", t.color||"#88c0d0");
+      if(newTask && newStart && newEnd){
+        t.task=newTask;
+        t.start=newStart;
+        t.end=newEnd;
+        t.color=newColor||t.color;
+        saveAndRender();
+      }
+    }
+
+    const deleteBtn=document.createElement("button");
+    deleteBtn.textContent="삭제";
+    deleteBtn.onclick=()=>{
+      tasks.splice(i,1);
+      saveAndRender();
+    }
+
+    div.appendChild(span);
+    div.appendChild(editBtn);
+    div.appendChild(deleteBtn);
+    taskListContainer.appendChild(div);
+  });
+}
+
+// toggle 버튼
+toggleBtn.addEventListener("click", ()=>{
+  if(taskListContainer.style.display==="none"){
+    taskListContainer.style.display="block";
+  } else {
+    taskListContainer.style.display="none";
+  }
+});
 
 const addBtn = document.getElementById("add");
-const deleteBtn = document.getElementById("delete");
 
 addBtn.addEventListener("click", ()=>{
   const task = document.getElementById("task").value.trim();
@@ -107,10 +154,6 @@ addBtn.addEventListener("click", ()=>{
   document.getElementById("task").value = "";
 });
 
-// 삭제 버튼: 마지막 일정 삭제
-deleteBtn.addEventListener("click", ()=>{
-  if(tasks.length===0){ alert("삭제할 일정이 없습니다."); return; }
-  const removed = tasks.pop();
-  saveAndRender();
-  alert(`삭제됨: ${removed.task}`);
-});
+let tbody = createTable();
+tasks.forEach(renderTask);
+renderTaskList();
