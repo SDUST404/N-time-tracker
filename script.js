@@ -2,13 +2,13 @@ const container = document.getElementById("table-container");
 const taskListContainer = document.getElementById("task-list-container");
 const toggleBtn = document.getElementById("toggle");
 
-// Notion 페이지별 독립 저장 (id 파라미터 기준)
+// Notion 페이지별 독립 저장 (id 파라미터 기준, 이 부분은 기존 유지)
 const urlParams = new URLSearchParams(window.location.search);
 const pageKey = urlParams.get("id") || location.hash.replace("#", "") || "default_page";
 
 const startHour = 6;
 const endHour = 24;
-const minutes = [0,10,20,30,40,50];  // 0분 포함
+const minutes = [0,10,20,30,40,50];  // 60 대신 0으로 수정
 
 let tasks = JSON.parse(localStorage.getItem(pageKey)||"[]");
 
@@ -28,7 +28,7 @@ function initTable(){
   minutes.forEach(m=>{
     const th = document.createElement("th");
     th.className="minute-col";
-    th.textContent=m.toString().padStart(2,"0");
+    th.textContent = m.toString().padStart(2,"0");
     headerRow.appendChild(th);
   });
   thead.appendChild(headerRow);
@@ -66,6 +66,28 @@ function hashColor(text){
   return `hsl(${hue},40%,70%)`;
 }
 
+// 셀 위치 계산 함수
+function findCellPosition(totalMinutes, isEnd = false) {
+  let hour = Math.floor(totalMinutes / 60);
+  let minute = totalMinutes % 60;
+
+  // minutes 배열 내 가장 가까운 다음 셀 찾기
+  let index = minutes.findIndex(m => m >= minute);
+  if(index === -1){
+    // 분이 50 초과면 다음 시간 0분 셀로 이동
+    hour += 1;
+    index = 0;
+  } else if(isEnd && minutes[index] > minute) {
+    // 종료시간 처리: 셀 포함 범위를 넓혀주기 위해 +1칸 처리
+    index +=1;
+    if(index >= minutes.length){
+      index = 0;
+      hour += 1;
+    }
+  }
+  return {hour, index};
+}
+
 function renderTask(taskObj) {
   const { task, start, end, color } = taskObj;
   const [sh, sm] = start.split(":").map(Number);
@@ -74,31 +96,14 @@ function renderTask(taskObj) {
   const startTotal = sh * 60 + sm;
   const endTotal = eh * 60 + em;
 
-  function findIndex(timeInMin) {
-    const minPart = timeInMin % 60;
-    const hourPart = Math.floor(timeInMin / 60);
+  const startPos = findCellPosition(startTotal);
+  const endPos = findCellPosition(endTotal, true);
 
-    for (let i = 0; i < minutes.length; i++) {
-      if (minPart <= minutes[i]) {
-        return { hour: hourPart, index: i };
-      }
-    }
-    return { hour: hourPart + 1, index: 0 };
-  }
+  let colspan = (endPos.hour - startPos.hour) * minutes.length + (endPos.index - startPos.index);
+  if(colspan <= 0) return;
 
-  const startPos = findIndex(startTotal);
-  const endPos = findIndex(endTotal);
-
-  const firstCell = tbody.querySelector(
-    `tr:nth-child(${startPos.hour - startHour + 1}) td:nth-child(${startPos.index + 2})`
-  );
-
-  if (!firstCell) return;
-
-  let colspan =
-    (endPos.hour - startPos.hour) * minutes.length + (endPos.index - startPos.index);
-
-  if (colspan <= 0) return;
+  const firstCell = tbody.querySelector(`tr:nth-child(${startPos.hour - startHour + 1}) td:nth-child(${startPos.index + 2})`);
+  if(!firstCell) return;
 
   firstCell.colSpan = colspan;
   firstCell.textContent = task;
@@ -106,20 +111,20 @@ function renderTask(taskObj) {
   firstCell.style.background = color || hashColor(task);
   firstCell.style.display = "";
 
-  for (let i = 1; i < colspan; i++) {
+  // 나머지 셀 숨기기
+  for(let i=1; i<colspan; i++){
     let currentIndex = startPos.index + i;
     let currentHour = startPos.hour + Math.floor(currentIndex / minutes.length);
     let currentMinuteIndex = currentIndex % minutes.length;
 
-    const cellToHide = tbody.querySelector(
-      `tr:nth-child(${currentHour - startHour + 1}) td:nth-child(${currentMinuteIndex + 2})`
-    );
-    if (cellToHide) cellToHide.style.display = "none";
+    const cellToHide = tbody.querySelector(`tr:nth-child(${currentHour - startHour + 1}) td:nth-child(${currentMinuteIndex + 2})`);
+    if(cellToHide) cellToHide.style.display = "none";
   }
 }
 
-// tbody만 초기화 + 렌더
+// tbody 초기화 + 렌더
 function saveAndRender(){
+  // 초기화
   tbody.querySelectorAll("td").forEach(td=>{
     td.textContent="";
     td.style.background="white";
@@ -172,7 +177,7 @@ function renderTaskList(){
   });
 }
 
-// toggle 버튼
+// 토글 버튼
 toggleBtn.addEventListener("click", ()=>{
   taskListContainer.style.display = taskListContainer.style.display === "none" ? "block" : "none";
 });
@@ -193,4 +198,5 @@ document.getElementById("add").addEventListener("click", ()=>{
 
 // 최초 table 생성 및 렌더
 initTable();
-saveAndRender();
+tasks.forEach(renderTask);
+renderTaskList();
