@@ -177,7 +177,7 @@ document.getElementById("add").addEventListener("click", () => {
   const end = document.getElementById("end").value;
   const color = document.getElementById("color").value;
   if (!task || !start || !end) {
-    alert("할일 입력 없");
+    alert("입력 없음");
     return;
   }
   tasks.push({ task, start, end, color });
