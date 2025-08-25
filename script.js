@@ -2,6 +2,7 @@ const container = document.getElementById("table-container");
 const taskListContainer = document.getElementById("task-list-container");
 const toggleBtn = document.getElementById("toggle");
 
+// Notion 페이지별 독립 저장
 const urlParams = new URLSearchParams(window.location.search);
 const pageKey = urlParams.get("id") || location.hash.replace("#", "") || "default_page";
 
@@ -15,6 +16,7 @@ let table, tbody;
 
 function initTable() {
   table = document.createElement("table");
+
   const thead = document.createElement("thead");
   const headerRow = document.createElement("tr");
 
@@ -28,7 +30,6 @@ function initTable() {
     th.textContent = m.toString().padStart(2, "0");
     headerRow.appendChild(th);
   });
-
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
@@ -60,26 +61,27 @@ function hashColor(text) {
   for (let i = 0; i < text.length; i++) {
     hash = text.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return `hsl(${Math.abs(hash) % 360}, 40%, 70%)`;
+  const hue = Math.abs(hash) % 360;
+  return `hsl(${hue},40%,70%)`;
 }
 
-function findCellPosition(totalMinutes, isEnd = false) {
-  let hour = Math.floor(totalMinutes / 60);
-  let minute = totalMinutes % 60;
-
+function findCellPos(totalMin, isEnd = false) {
+  let hour = Math.floor(totalMin / 60);
+  let minute = totalMin % 60;
   let index = minutes.findIndex(m => m >= minute);
+
   if (index === -1) {
     hour += 1;
     index = 0;
   }
 
   if (isEnd) {
-    if (minute % 10 !== 0 || !minutes.includes(minute)) {
-      index += 1;
-    }
-    if (index >= minutes.length) {
-      hour += 1;
-      index = 0;
+    if (minute % 10 !== 0) {
+      index++;
+      if (index >= minutes.length) {
+        hour += 1;
+        index = 0;
+      }
     }
   }
 
@@ -94,15 +96,17 @@ function renderTask(taskObj) {
   const startTotal = sh * 60 + sm;
   const endTotal = eh * 60 + em;
 
-  const startPos = findCellPosition(startTotal);
-  const endPos = findCellPosition(endTotal, true);
+  const startPos = findCellPos(startTotal, false);
+  const endPos = findCellPos(endTotal, true);
 
-  const colspan = (endPos.hour - startPos.hour) * minutes.length + (endPos.index - startPos.index);
+  const totalCols = minutes.length;
+  const colspan = (endPos.hour - startPos.hour) * totalCols + (endPos.index - startPos.index);
   if (colspan <= 0) return;
 
   const row = tbody.children[startPos.hour - startHour];
   if (!row) return;
-  const cell = row.children[startPos.index + 1]; // +1 for th
+
+  const cell = row.children[startPos.index + 1];
   if (!cell) return;
 
   cell.colSpan = colspan;
@@ -111,13 +115,15 @@ function renderTask(taskObj) {
   cell.style.background = color || hashColor(task);
   cell.style.display = "";
 
+  // 병합 셀 숨기기
   for (let i = 1; i < colspan; i++) {
-    const index = startPos.index + i;
-    const hourOffset = Math.floor(index / minutes.length);
-    const minuteIndex = index % minutes.length;
-    const r = tbody.children[startPos.hour - startHour + hourOffset];
+    const idx = startPos.index + i;
+    const hr = startPos.hour + Math.floor(idx / totalCols);
+    const mi = idx % totalCols;
+
+    const r = tbody.children[hr - startHour];
     if (!r) continue;
-    const td = r.children[minuteIndex + 1];
+    const td = r.children[mi + 1];
     if (td) td.style.display = "none";
   }
 }
@@ -167,7 +173,9 @@ function renderTaskList() {
       saveAndRender();
     };
 
-    div.append(span, editBtn, deleteBtn);
+    div.appendChild(span);
+    div.appendChild(editBtn);
+    div.appendChild(deleteBtn);
     taskListContainer.appendChild(div);
   });
 }
@@ -183,7 +191,7 @@ document.getElementById("add").addEventListener("click", () => {
   const color = document.getElementById("color").value;
 
   if (!task || !start || !end) {
-    alert("항목 입력 필요");
+    alert("모든 항목 입력!");
     return;
   }
 
