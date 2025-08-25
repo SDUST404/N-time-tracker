@@ -60,36 +60,40 @@ function hashColor(text){
   return `hsl(${hue},40%,70%)`;
 }
 
+function timeToIndex(hour, minute){
+  const totalMinutes = (hour-startHour)*60 + minute;
+  return Math.floor(totalMinutes/10);
+}
+
 function renderTask(taskObj){
   const {task,start,end,color}=taskObj;
   const [sh,sm]=start.split(":").map(Number);
   const [eh,em]=end.split(":").map(Number);
 
   const cells=Array.from(tbody.querySelectorAll("td"));
-  const startIndex=(sh-startHour)*6 + Math.floor(sm/10);
-  const endIndex=(eh-startHour)*6 + Math.floor(em/10);
-  const colspan=endIndex-startIndex;
-  if(colspan<=0) return;
+  const startIndex = timeToIndex(sh,sm);
+  const endIndex = timeToIndex(eh,em);
+  const colspan = endIndex - startIndex;
+  if(colspan <=0) return;
 
-  const firstCell=cells[startIndex];
-  firstCell.textContent=task;
-  firstCell.style.background=color||hashColor(task);
-  firstCell.colSpan=colspan;
+  const firstCell = cells[startIndex];
+  firstCell.textContent = task;
+  firstCell.style.background = color||hashColor(task);
+  firstCell.colSpan = colspan;
 
   for(let i=startIndex+1;i<endIndex;i++){
-    const cell=cells[i];
+    const cell = cells[i];
     cell.style.display="none";
   }
 }
 
 function saveAndRender(){
   localStorage.setItem(pageKey,JSON.stringify(tasks));
-  tbody=createTable();
+  tbody = createTable();
   tasks.forEach(renderTask);
   renderTaskList();
 }
 
-// 토글용 리스트
 function renderTaskList(){
   taskListContainer.innerHTML="";
   tasks.forEach((t,i)=>{
