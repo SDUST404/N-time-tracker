@@ -2,7 +2,7 @@ const container = document.getElementById("table-container");
 const taskListContainer = document.getElementById("task-list-container");
 const toggleBtn = document.getElementById("toggle");
 
-// Notion 페이지별 독립 저장
+// Notion 페이지별 독립 저장 (id 파라미터 기준, 이 부분은 기존 유지)
 const urlParams = new URLSearchParams(window.location.search);
 const pageKey = urlParams.get("id") || "default_page";
 
@@ -66,28 +66,28 @@ function hashColor(text){
   return `hsl(${hue},40%,70%)`;
 }
 
-function timeToIndex(hour, minute){
-  return ((hour-startHour)*60 + minute)/10;
-}
-
 function renderTask(taskObj){
-  const {task,start,end,color} = taskObj;
-  const [sh,sm] = start.split(":").map(Number);
-  const [eh,em] = end.split(":").map(Number);
+  const {task, start, end, color} = taskObj;
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
 
-  const cells = Array.from(tbody.querySelectorAll("td"));
-  const startIndex = Math.floor(timeToIndex(sh,sm));
-  const endIndex = Math.ceil(timeToIndex(eh,em));
-  const colspan = endIndex - startIndex;
-  if(colspan <= 0) return;
+  const startTotal = sh * 60 + sm;
+  const endTotal = eh * 60 + em;
 
-  const firstCell = cells[startIndex];
-  firstCell.textContent = task;
-  firstCell.style.background = color || hashColor(task);
-  firstCell.colSpan = colspan;
+  for (let t = startTotal; t < endTotal; t += 10) {
+    const hour = Math.floor(t / 60);
+    const minute = t % 60;
 
-  for(let i=startIndex+1;i<endIndex;i++){
-    cells[i].style.display = "none";
+    // 분 단위를 가장 가까운 10의 배수로 올림 (10,20,...,60 중에서)
+    const roundedMinute = minutes.find(m => minute <= m);
+    if (!roundedMinute) continue;
+
+    const cell = tbody.querySelector(`td[data-hour="${hour}"][data-minute="${roundedMinute}"]`);
+    if (cell) {
+      cell.style.background = color || hashColor(task);
+      cell.textContent = task;
+      cell.title = `${task} (${start}~${end})`;
+    }
   }
 }
 
@@ -99,6 +99,7 @@ function saveAndRender(){
     td.style.background="white";
     td.style.display="";
     td.colSpan=1;
+    td.title = "";
   });
 
   tasks.forEach(renderTask);
