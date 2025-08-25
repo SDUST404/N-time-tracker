@@ -47,3 +47,18 @@ td {
   cursor: pointer;
   vertical-align: middle;
 }
+
+/* 토글 목록 스타일 */
+#task-list-container div {
+  margin: 3px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+#task-list-container button {
+  font-size: 11px;
+  padding: 2px 5px;
+  cursor: pointer;
+}
