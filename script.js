@@ -1,7 +1,11 @@
 const container = document.getElementById("table-container");
-const pageKey = location.pathname || "default_page";
 const taskListContainer = document.getElementById("task-list-container");
 const toggleBtn = document.getElementById("toggle");
+
+// 🔹 Notion 페이지별 독립 저장
+// iframe URL에 ?id=페이지ID 를 붙여서 사용
+const urlParams = new URLSearchParams(window.location.search);
+const pageKey = urlParams.get("id") || "default_page";
 
 const startHour = 6;
 const endHour = 24;
@@ -60,13 +64,11 @@ function hashColor(text){
   return `hsl(${hue},40%,70%)`;
 }
 
-// 10분 단위 인덱스 계산
 function timeToIndex(hour, minute){
   const totalMinutes = (hour-startHour)*60 + minute;
   return totalMinutes / 10;
 }
 
-// 병합 셀 표시
 function renderTask(taskObj){
   const {task,start,end,color}=taskObj;
   const [sh,sm]=start.split(":").map(Number);
@@ -89,7 +91,6 @@ function renderTask(taskObj){
   }
 }
 
-// 저장 및 렌더링
 function saveAndRender(){
   localStorage.setItem(pageKey,JSON.stringify(tasks));
   tbody = createTable();
@@ -97,7 +98,6 @@ function saveAndRender(){
   renderTaskList();
 }
 
-// 토글용 리스트 표시
 function renderTaskList(){
   taskListContainer.innerHTML="";
   tasks.forEach((t,i)=>{
