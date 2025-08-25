@@ -4,7 +4,7 @@ const toggleBtn = document.getElementById("toggle");
 
 // Notion 페이지별 독립 저장 (id 파라미터 기준, 이 부분은 기존 유지)
 const urlParams = new URLSearchParams(window.location.search);
-const pageKey = urlParams.get("id") || "default_page";
+const pageKey = urlParams.get("id") || location.hash.replace("#", "") || "default_page";
 
 const startHour = 6;
 const endHour = 24;
