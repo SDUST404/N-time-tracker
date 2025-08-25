@@ -104,4 +104,91 @@ function renderTask(taskObj) {
   }
 
   if (firstCell) {
-    firstCell.colSpan = col
+    firstCell.colSpan = colspan;
+    firstCell.textContent = task;
+    firstCell.title = `${task} (${start}~${end})`;
+    firstCell.style.background = color || hashColor(task);
+    firstCell.style.display = "";
+  }
+}
+
+// 테이블 초기화 후 전체 렌더
+function saveAndRender() {
+  tbody.querySelectorAll("td").forEach(td => {
+    td.textContent = "";
+    td.style.background = "white";
+    td.style.display = "";
+    td.colSpan = 1;
+    td.title = "";
+  });
+
+  tasks.forEach(renderTask);
+  localStorage.setItem(pageKey, JSON.stringify(tasks));
+  renderTaskList();
+}
+
+// 일정 리스트 렌더링
+function renderTaskList() {
+  taskListContainer.innerHTML = "";
+  tasks.forEach((t, i) => {
+    const div = document.createElement("div");
+    const span = document.createElement("span");
+    span.textContent = `${t.task} (${t.start}~${t.end})`;
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "수정";
+    editBtn.onclick = () => {
+      const newTask = prompt("할 일 수정:", t.task);
+      if (newTask === null) return;
+      const newStart = prompt("시작 시간 수정:", t.start);
+      const newEnd = prompt("종료 시간 수정:", t.end);
+      const newColor = prompt("색상 코드 입력:", t.color || "#88c0d0");
+      if (newTask && newStart && newEnd) {
+        t.task = newTask;
+        t.start = newStart;
+        t.end = newEnd;
+        t.color = newColor || t.color;
+        saveAndRender();
+      }
+    };
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "삭제";
+    deleteBtn.onclick = () => {
+      tasks.splice(i, 1);
+      saveAndRender();
+    };
+
+    div.appendChild(span);
+    div.appendChild(editBtn);
+    div.appendChild(deleteBtn);
+    taskListContainer.appendChild(div);
+  });
+}
+
+// 토글 버튼
+toggleBtn.addEventListener("click", () => {
+  taskListContainer.style.display = taskListContainer.style.display === "none" ? "block" : "none";
+});
+
+// 추가 버튼
+document.getElementById("add").addEventListener("click", () => {
+  const task = document.getElementById("task").value.trim();
+  const start = document.getElementById("start").value;
+  const end = document.getElementById("end").value;
+  const color = document.getElementById("color").value;
+
+  if (!task || !start || !end) {
+    alert("모든 항목 입력!");
+    return;
+  }
+
+  tasks.push({ task, start, end, color });
+  saveAndRender();
+  document.getElementById("task").value = "";
+});
+
+// 초기 테이블 생성
+initTable();
+tasks.forEach(renderTask);
+renderTaskList();
