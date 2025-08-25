@@ -22,10 +22,10 @@ table {
 th, td {
   border: 1px solid #ccc;
   text-align: center;
-  min-width: 60px;
-  height: 25px;
-  font-size: 12px;
-  padding: 2px;
+  min-width: 30px;
+  height: 20px;
+  font-size: 11px;
+  padding: 1px;
 }
 
 th.time-col {
