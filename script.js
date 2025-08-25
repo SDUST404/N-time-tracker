@@ -74,20 +74,43 @@ function renderTask(taskObj){
   const startTotal = sh * 60 + sm;
   const endTotal = eh * 60 + em;
 
+  let firstCell = null;
+  let colspan = 0;
+
   for (let t = startTotal; t < endTotal; t += 10) {
-    const hour = Math.floor(t / 60);
-    const minute = t % 60;
+    let hour = Math.floor(t / 60);
+    let minute = t % 60;
 
-    // 분 단위를 가장 가까운 10의 배수로 올림 (10,20,...,60 중에서)
-    const roundedMinute = minutes.find(m => minute <= m);
-    if (!roundedMinute) continue;
-
-    const cell = tbody.querySelector(`td[data-hour="${hour}"][data-minute="${roundedMinute}"]`);
-    if (cell) {
-      cell.style.background = color || hashColor(task);
-      cell.textContent = task;
-      cell.title = `${task} (${start}~${end})`;
+    // ⛔ minute == 60인 경우 다음 시간 0분 처리
+    if (minute === 60) {
+      hour += 1;
+      minute = 0;
     }
+
+    // 가장 가까운 10의 배수로 올림
+    const roundedMinute = minutes.find(m => minute <= m);
+    if (roundedMinute === undefined) continue;
+
+    // 만약 60분이면 다음 시간 0분 처리
+    let cell = tbody.querySelector(`td[data-hour="${hour}"][data-minute="${roundedMinute}"]`);
+    if (!cell) continue;
+
+    if (!firstCell) {
+      firstCell = cell;
+      colspan = 1;
+    } else {
+      cell.style.display = "none";
+      colspan++;
+    }
+  }
+
+  // 병합 처리 및 내용 추가
+  if (firstCell) {
+    firstCell.colSpan = colspan;
+    firstCell.textContent = task;
+    firstCell.title = `${task} (${start}~${end})`;
+    firstCell.style.background = color || hashColor(task);
+    firstCell.style.display = "";
   }
 }
 
