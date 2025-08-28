@@ -110,11 +110,12 @@ function renderTask(taskObj) {
 
   if (endTotal <= currentTotal) return;
 
+  let isFirstRow = true; // 첫 번째 행 여부 체크
+
   while (currentTotal < endTotal) {
     const currentHour = Math.floor(currentTotal / 60);
     const currentMinute = currentTotal % 60;
 
-    // 이 행에서 최대 병합 가능한 끝 시간 (다음 시간 0분 혹은 종료 시간)
     const rowEndTotal = Math.min((currentHour + 1) * 60, endTotal);
 
     const startPos = findCellPos(currentTotal);
@@ -130,12 +131,12 @@ function renderTask(taskObj) {
     if (!cell) break;
 
     cell.colSpan = colspan;
-    cell.textContent = task;
+    // 첫 행이면 텍스트 출력, 아니면 빈문자열 처리
+    cell.textContent = isFirstRow ? task : "";
     cell.title = `${task} (${start}~${end})`;
     cell.style.background = color || hashColor(task);
     cell.style.display = "";
 
-    // 병합된 칸 숨기기
     for (let i = 1; i < colspan; i++) {
       const idx = startPos.index + i;
       const hr = startPos.hour + Math.floor(idx / totalCols);
@@ -146,7 +147,8 @@ function renderTask(taskObj) {
       if (td) td.style.display = "none";
     }
 
-    currentTotal = rowEndTotal; // 다음 행 시작 위치로 이동
+    currentTotal = rowEndTotal;
+    isFirstRow = false; // 다음부터는 빈 문자열 출력
   }
 }
 
