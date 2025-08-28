@@ -8,15 +8,6 @@ body {
 
 .form {
   margin-bottom: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 5px; /* 요소 간 간격 */
-}
-
-/* 추가 버튼을 입력칸 왼쪽으로 이동 */
-#add {
-  order: -1; /* 버튼을 맨 앞으로 */
 }
 
 #table-container {
@@ -65,8 +56,4 @@ td {
   gap: 5px;
 }
 
-#task-list-container button {
-  font-size: 11px;
-  padding: 2px 5px;
-  cursor: pointer;
-}
+#
