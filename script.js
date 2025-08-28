@@ -76,32 +76,6 @@ function initTable() {
   container.appendChild(table);
 }
 
-//------------------------findcellpos함수---------------------------
-function findCellPos(totalMin, isEnd = false) {
-  let hour = Math.floor(totalMin / 60);
-  let minute = totalMin % 60;
-  
-  // 현재 분보다 큰 첫 번째 10분 단위 칸을 찾음
-  let index = minutes.findIndex(m => m > minute);
-
-  // 만약 분이 50 이상이면 다음 시간 첫 칸으로 넘김
-  if (index === -1) {
-    hour += 1;
-    index = 0;
-  }
-
-  // 끝 시간일 때, 분이 10분 단위가 아니면 다음 칸으로 보정
-  if (isEnd && minute % 10 !== 0) {
-    index++;
-    if (index >= minutes.length) {
-      hour++;
-      index = 0;
-    }
-  }
-
-  return { hour, index };
-}
-
 // ----------------------- 색상 생성 -----------------------
 function hashColor(text) {
   let hash = 0;
@@ -113,22 +87,12 @@ function hashColor(text) {
 }
 
 // ----------------------- 셀 위치 계산 -----------------------
-function findCellPos(totalMin, isEnd = false) {
-  let hour = Math.floor(totalMin / 60);
-  let minute = totalMin % 60;
-  let index = minutes.findIndex(m => m >= minute);
+function findCellPos(totalMin) {
+  const hour = Math.floor(totalMin / 60);
+  const minute = totalMin % 60;
+  const index = minutes.indexOf(minute);
   if (index === -1) {
-    hour += 1;
-    index = 0;
-  }
-  if (isEnd) {
-    if (minute % 10 !== 0) {
-      index++;
-      if (index >= minutes.length) {
-        hour += 1;
-        index = 0;
-      }
-    }
+    throw new Error("Invalid minute value: not a 10-minute increment");
   }
   return { hour, index };
 }
@@ -142,45 +106,34 @@ function renderTask(taskObj) {
   const startTotal = sh * 60 + sm;
   const endTotal = eh * 60 + em;
 
-  const startPos = findCellPos(startTotal, false);
-  const endPos = findCellPos(endTotal, true);
+  const startPos = findCellPos(startTotal);
+  const endPos = findCellPos(endTotal);
 
   const totalCols = minutes.length;
   const colspan = (endPos.hour - startPos.hour) * totalCols + (endPos.index - startPos.index);
+
   if (colspan <= 0) return;
 
-  let currentHour = startPos.hour;
-  let currentIndex = startPos.index;
+  const row = tbody.children[startPos.hour - startHour];
+  if (!row) return;
 
-  let remaining = colspan;
-  let isFirstCell = true;
+  const cell = row.children[startPos.index + 1];
+  if (!cell) return;
 
-  while (remaining > 0) {
-    const row = tbody.children[currentHour - startHour];
-    if (!row) break;
+  cell.colSpan = colspan;
+  cell.textContent = task;
+  cell.title = `${task} (${start}~${end})`;
+  cell.style.background = color || hashColor(task);
+  cell.style.display = "";
 
-    const cell = row.children[currentIndex + 1]; // +1은 시간 컬럼 제외
-    if (!cell) break;
-
-    if (isFirstCell) {
-      cell.colSpan = Math.min(remaining, totalCols - currentIndex);
-      cell.textContent = task;
-      cell.title = `${task} (${start}~${end})`;
-      cell.style.background = color || hashColor(task);
-      cell.style.display = "";
-      isFirstCell = false;
-    } else {
-      cell.style.display = "none";
-      cell.colSpan = 1; // 혹시 재사용 시를 대비해 기본값으로 초기화
-    }
-
-    remaining--;
-    currentIndex++;
-
-    if (currentIndex >= totalCols) {
-      currentHour++;
-      currentIndex = 0;
-    }
+  for (let i = 1; i < colspan; i++) {
+    const idx = startPos.index + i;
+    const hr = startPos.hour + Math.floor(idx / totalCols);
+    const mi = idx % totalCols;
+    const r = tbody.children[hr - startHour];
+    if (!r) continue;
+    const td = r.children[mi + 1];
+    if (td) td.style.display = "none";
   }
 }
 
