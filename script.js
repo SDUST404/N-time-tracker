@@ -152,13 +152,11 @@ async function loadTasks() {
   try {
     const querySnapshot = await getDocs(tasksCollection);
     tasks = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    initTable();
-    saveAndRender();
+    saveAndRender(); // 테이블은 이미 생성된 상태
   } catch (error) {
     console.error("Firebase 데이터 불러오기 실패:", error);
     tasks = [];
-    initTable();
-    saveAndRender();
+    saveAndRender(); // 테이블은 이미 생성된 상태
   }
 }
 
@@ -235,4 +233,8 @@ document.getElementById("add").addEventListener("click", async () => {
 });
 
 // ----------------------- 초기화 -----------------------
+// 페이지 로드 시 테이블 먼저 생성
+initTable();
+
+// Firestore 데이터 로드
 loadTasks();
