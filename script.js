@@ -103,37 +103,50 @@ function renderTask(taskObj) {
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
 
-  const startTotal = sh * 60 + sm;
+  let currentTotal = sh * 60 + sm;
   const endTotal = eh * 60 + em;
 
-  const startPos = findCellPos(startTotal);
-  const endPos = findCellPos(endTotal);
-
   const totalCols = minutes.length;
-  const colspan = (endPos.hour - startPos.hour) * totalCols + (endPos.index - startPos.index);
 
-  if (colspan <= 0) return;
+  if (endTotal <= currentTotal) return;
 
-  const row = tbody.children[startPos.hour - startHour];
-  if (!row) return;
+  while (currentTotal < endTotal) {
+    const currentHour = Math.floor(currentTotal / 60);
+    const currentMinute = currentTotal % 60;
 
-  const cell = row.children[startPos.index + 1];
-  if (!cell) return;
+    // 이 행에서 최대 병합 가능한 끝 시간 (다음 시간 0분 혹은 종료 시간)
+    const rowEndTotal = Math.min((currentHour + 1) * 60, endTotal);
 
-  cell.colSpan = colspan;
-  cell.textContent = task;
-  cell.title = `${task} (${start}~${end})`;
-  cell.style.background = color || hashColor(task);
-  cell.style.display = "";
+    const startPos = findCellPos(currentTotal);
+    const endPos = findCellPos(rowEndTotal);
 
-  for (let i = 1; i < colspan; i++) {
-    const idx = startPos.index + i;
-    const hr = startPos.hour + Math.floor(idx / totalCols);
-    const mi = idx % totalCols;
-    const r = tbody.children[hr - startHour];
-    if (!r) continue;
-    const td = r.children[mi + 1];
-    if (td) td.style.display = "none";
+    const colspan = (endPos.hour - startPos.hour) * totalCols + (endPos.index - startPos.index);
+    if (colspan <= 0) break;
+
+    const row = tbody.children[currentHour - startHour];
+    if (!row) break;
+
+    const cell = row.children[startPos.index + 1];
+    if (!cell) break;
+
+    cell.colSpan = colspan;
+    cell.textContent = task;
+    cell.title = `${task} (${start}~${end})`;
+    cell.style.background = color || hashColor(task);
+    cell.style.display = "";
+
+    // 병합된 칸 숨기기
+    for (let i = 1; i < colspan; i++) {
+      const idx = startPos.index + i;
+      const hr = startPos.hour + Math.floor(idx / totalCols);
+      const mi = idx % totalCols;
+      const r = tbody.children[hr - startHour];
+      if (!r) continue;
+      const td = r.children[mi + 1];
+      if (td) td.style.display = "none";
+    }
+
+    currentTotal = rowEndTotal; // 다음 행 시작 위치로 이동
   }
 }
 
