@@ -148,18 +148,20 @@ function renderTask(taskObj) {
 }
 
 // ----------------------- Firestore에서 데이터 불러오기 -----------------------
+import { query, where } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
 async function loadTasks() {
   try {
-    const querySnapshot = await getDocs(tasksCollection);
+    const q = query(tasksCollection, where("pageKey", "==", pageKey));
+    const querySnapshot = await getDocs(q);
     tasks = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    saveAndRender(); // 테이블은 이미 생성된 상태
+    saveAndRender();
   } catch (error) {
     console.error("Firebase 데이터 불러오기 실패:", error);
     tasks = [];
-    saveAndRender(); // 테이블은 이미 생성된 상태
+    saveAndRender();
   }
 }
-
 // ----------------------- Firestore에 데이터 저장 -----------------------
 async function saveTasks() {
   // 기존 구현은 ID 없이 덮어쓰기였지만, 새 추가는 addDoc 사용 -> 별도 구현 필요 없음
@@ -222,7 +224,7 @@ document.getElementById("add").addEventListener("click", async () => {
   }
 
   try {
-    const newTaskObj = { task, start, end, color };
+    const newTaskObj = { task, start, end, color, pageKey };
     const docRef = await addDoc(tasksCollection, newTaskObj);
     tasks.push({ id: docRef.id, ...newTaskObj }); // Firestore ID 포함
     saveAndRender();
