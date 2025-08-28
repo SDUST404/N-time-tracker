@@ -1,18 +1,24 @@
-// Firebase SDK import
-import {
-  getFirestore, collection, doc, getDoc, setDoc
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
-import { getApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+// Firebase import
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getFirestore, collection, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
-const db = getFirestore(getApp());
+// Firebase 초기화
+const firebaseConfig = {
+  apiKey: "AIzaSyB0g3y8kQqllDKK9tJffHrmjRukISA163Q",
+  authDomain: "n-timetracker.firebaseapp.com",
+  projectId: "n-timetracker",
+  storageBucket: "n-timetracker.firebasestorage.app",
+  messagingSenderId: "494974569671",
+  appId: "1:494974569671:web:e18dd2ba8cc5bcefa402e2"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // DOM 요소 가져오기
   const container = document.getElementById("table-container");
   const taskListContainer = document.getElementById("task-list-container");
   const toggleBtn = document.getElementById("toggle");
 
-  // Notion 페이지별 독립 저장 키
   const urlParams = new URLSearchParams(window.location.search);
   const pageKey = urlParams.get("id") || location.hash.replace("#", "") || "default_page";
 
@@ -20,10 +26,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const endHour = 24;
   const minutes = [0, 10, 20, 30, 40, 50];
 
-  let tasks = []; // Firestore에서 불러올 데이터
+  let tasks = [];
+
   let table, tbody;
 
-  // ======================= 테이블 초기화 =======================
   function initTable() {
     table = document.createElement("table");
 
@@ -66,7 +72,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     container.appendChild(table);
   }
 
-  // ======================= 색상 생성 =======================
   function hashColor(text) {
     let hash = 0;
     for (let i = 0; i < text.length; i++) {
@@ -76,7 +81,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return `hsl(${hue},40%,70%)`;
   }
 
-  // ======================= 셀 위치 계산 =======================
   function findCellPos(totalMin, isEnd = false) {
     let hour = Math.floor(totalMin / 60);
     let minute = totalMin % 60;
@@ -100,7 +104,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     return { hour, index };
   }
 
-  // ======================= 할 일 렌더링 =======================
   function renderTask(taskObj) {
     const { task, start, end, color } = taskObj;
     const [sh, sm] = start.split(":").map(Number);
@@ -128,7 +131,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     cell.style.background = color || hashColor(task);
     cell.style.display = "";
 
-    // 병합된 셀 숨기기
     for (let i = 1; i < colspan; i++) {
       const idx = startPos.index + i;
       const hr = startPos.hour + Math.floor(idx / totalCols);
@@ -141,7 +143,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   }
 
-  // ======================= 저장 & 렌더링 =======================
   async function saveAndRender() {
     tbody.querySelectorAll("td").forEach(td => {
       td.textContent = "";
@@ -154,12 +155,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     tasks.forEach(renderTask);
 
     // Firestore에 저장
-    await setDoc(doc(collection(db, "timeTracker"), pageKey), { tasks });
+    try {
+      await setDoc(doc(collection(db, "timeTracker"), pageKey), { tasks });
+    } catch (e) {
+      console.error("Firestore 저장 오류:", e);
+    }
 
     renderTaskList();
   }
 
-  // ======================= 할 일 목록 표시 =======================
   function renderTaskList() {
     taskListContainer.innerHTML = "";
     tasks.forEach((t, i) => {
@@ -198,19 +202,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  // ======================= Firestore에서 불러오기 =======================
   async function loadTasks() {
-    const ref = doc(collection(db, "timeTracker"), pageKey);
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      tasks = snap.data().tasks || [];
-    } else {
-      tasks = [];
+    try {
+      const ref = doc(collection(db, "timeTracker"), pageKey);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        tasks = snap.data().tasks || [];
+      }
+    } catch (e) {
+      console.error("Firestore 불러오기 오류:", e);
     }
     saveAndRender();
   }
 
-  // ======================= 이벤트 바인딩 =======================
   toggleBtn.addEventListener("click", () => {
     taskListContainer.style.display =
       taskListContainer.style.display === "none" ? "block" : "none";
@@ -232,7 +236,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("task").value = "";
   });
 
-  // ======================= 실행 =======================
+  // 실행
   initTable();
   await loadTasks();
 });
