@@ -121,41 +121,39 @@ function renderTask(taskObj) {
 
   const totalCols = minutes.length;
   const colspan = (endPos.hour - startPos.hour) * totalCols + (endPos.index - startPos.index);
-
   if (colspan <= 0) return;
 
-  const startRow = tbody.children[startPos.hour - startHour];
-  if (!startRow) return;
+  let currentHour = startPos.hour;
+  let currentIndex = startPos.index;
 
-  const startCell = startRow.children[startPos.index + 1];
-  if (!startCell) return;
-
-  // 첫 셀 설정
-  startCell.colSpan = colspan;
-  startCell.textContent = task;
-  startCell.title = `${task} (${start}~${end})`;
-  startCell.style.background = color || hashColor(task);
-  startCell.style.display = "";
-
-  // 나머지 셀 숨기기
-  let remaining = colspan - 1;
-  let h = startPos.hour;
-  let i = startPos.index + 1;
+  let remaining = colspan;
+  let isFirstCell = true;
 
   while (remaining > 0) {
-    if (i >= totalCols) {
-      h += 1;
-      i = 0;
-    }
-
-    const row = tbody.children[h - startHour];
+    const row = tbody.children[currentHour - startHour];
     if (!row) break;
 
-    const td = row.children[i + 1]; // +1: 왼쪽 시간 th 보정
-    if (td) td.style.display = "none";
+    const cell = row.children[currentIndex + 1]; // +1 for time column
+    if (!cell) break;
 
-    i += 1;
-    remaining -= 1;
+    if (isFirstCell) {
+      cell.colSpan = Math.min(remaining, totalCols - currentIndex);
+      cell.textContent = task;
+      cell.title = `${task} (${start}~${end})`;
+      cell.style.background = color || hashColor(task);
+      cell.style.display = "";
+      isFirstCell = false;
+    } else {
+      cell.style.display = "none";
+    }
+
+    remaining--;
+    currentIndex++;
+
+    if (currentIndex >= totalCols) {
+      currentHour++;
+      currentIndex = 0;
+    }
   }
 }
 
