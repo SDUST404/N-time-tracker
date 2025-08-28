@@ -98,10 +98,17 @@ function findCellPos(totalMin) {
 }
 
 // ----------------------- 테이블에 할 일 렌더링 -----------------------
+function ceilToNearest10(minute) {
+  return Math.min(50, Math.ceil(minute / 10) * 10);
+}
+
 function renderTask(taskObj) {
   const { task, start, end, color } = taskObj;
-  const [sh, sm] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
+  const [sh, smRaw] = start.split(":").map(Number);
+  const [eh, emRaw] = end.split(":").map(Number);
+
+  const sm = ceilToNearest10(smRaw);
+  const em = ceilToNearest10(emRaw);
 
   let currentTotal = sh * 60 + sm;
   const endTotal = eh * 60 + em;
