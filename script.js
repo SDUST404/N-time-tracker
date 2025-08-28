@@ -1,3 +1,11 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+const firebaseConfig = { /* 기존 Firebase 설정 */ };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const tasksCollection = collection(db, "tasks");
+
 const container = document.getElementById("table-container");
 const taskListContainer = document.getElementById("task-list-container");
 const toggleBtn = document.getElementById("toggle");
@@ -8,7 +16,8 @@ const pageKey = urlParams.get("id") || location.hash.replace("#", "") || "defaul
 const startHour = 6;
 const endHour = 24;
 const minutes = [0, 10, 20, 30, 40, 50];
-let tasks = JSON.parse(localStorage.getItem(pageKey) || "[]");
+let tasks = [];
+loadTasks(); // Firestore에서 초기 데이터 불러오기
 
 let table, tbody;
 
@@ -131,7 +140,8 @@ function saveAndRender() {
   });
 
   tasks.forEach(renderTask);
-  localStorage.setItem(pageKey, JSON.stringify(tasks));
+  // Firestore에 저장하는 함수 호출
+saveTasks(); // 새 함수 만들어서 Firestore 저장
   renderTaskList();
 }
 
@@ -180,20 +190,20 @@ toggleBtn.addEventListener("click", () => {
   taskListContainer.style.display = taskListContainer.style.display === "none" ? "block" : "none";
 });
 
-document.getElementById("add").addEventListener("click", () => {
-  const task = document.getElementById("task").value;
-  const start = document.getElementById("start").value;
-  const end = document.getElementById("end").value;
-  const color = document.getElementById("color").value;
-
-  if (task === "" || start === "" || end === "") {
-    alert("할일 입력");
-    return;
-  }
-
-  tasks.push({ task, start, end, color });
-  saveAndRender();
-  document.getElementById("task").value = "";
+document.getElementById("add").addEventListener("click", async () => {
+    const task = document.getElementById("task").value;
+    const start = document.getElementById("start").value;
+    const end = document.getElementById("end").value;
+    const color = document.getElementById("color").value;
+    if (task === "" || start === "" || end === "") {
+        alert("할일 입력");
+        return;
+    }
+    const newTask = { task, start, end, color };
+    tasks.push(newTask);
+    await addDoc(tasksCollection, newTask); // Firestore 저장
+    saveAndRender();
+    document.getElementById("task").value = "";
 });
 
 initTable();
