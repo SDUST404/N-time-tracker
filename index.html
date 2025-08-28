@@ -21,6 +21,26 @@
     <div id="task-list-container" style="display:none; margin-top:5px;"></div>
   </div>
 
-  <script src="script.js"></script>
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // Firebase 기본 SDK
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+    // Firebase 설정 (본인 프로젝트 값 그대로)
+    const firebaseConfig = {
+      apiKey: "AIzaSyB0g3y8kQqllDKK9tJffHrmjRukISA163Q",
+      authDomain: "n-timetracker.firebaseapp.com",
+      projectId: "n-timetracker",
+      storageBucket: "n-timetracker.firebasestorage.app",
+      messagingSenderId: "494974569671",
+      appId: "1:494974569671:web:e18dd2ba8cc5bcefa402e2"
+    };
+
+    // Firebase 초기화
+    const app = initializeApp(firebaseConfig);
+
+    // script.js 모듈 실행
+    import "./script.js";
+  </script>
 </body>
 </html>
