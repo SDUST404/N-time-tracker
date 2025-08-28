@@ -233,5 +233,5 @@ document.getElementById("add").addEventListener("click", () => {
 });
 
 // ======================= 실행 =======================
-initTable();
-loadTasks();
+initTable();   // 표 생성
+loadTasks();   // Firestore에서 기존 기록 불러오기
