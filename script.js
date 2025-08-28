@@ -76,6 +76,32 @@ function initTable() {
   container.appendChild(table);
 }
 
+//------------------------findcellpos함수---------------------------
+function findCellPos(totalMin, isEnd = false) {
+  let hour = Math.floor(totalMin / 60);
+  let minute = totalMin % 60;
+  
+  // 현재 분보다 큰 첫 번째 10분 단위 칸을 찾음
+  let index = minutes.findIndex(m => m > minute);
+
+  // 만약 분이 50 이상이면 다음 시간 첫 칸으로 넘김
+  if (index === -1) {
+    hour += 1;
+    index = 0;
+  }
+
+  // 끝 시간일 때, 분이 10분 단위가 아니면 다음 칸으로 보정
+  if (isEnd && minute % 10 !== 0) {
+    index++;
+    if (index >= minutes.length) {
+      hour++;
+      index = 0;
+    }
+  }
+
+  return { hour, index };
+}
+
 // ----------------------- 색상 생성 -----------------------
 function hashColor(text) {
   let hash = 0;
@@ -133,7 +159,7 @@ function renderTask(taskObj) {
     const row = tbody.children[currentHour - startHour];
     if (!row) break;
 
-    const cell = row.children[currentIndex + 1]; // +1 for time column
+    const cell = row.children[currentIndex + 1]; // +1은 시간 컬럼 제외
     if (!cell) break;
 
     if (isFirstCell) {
@@ -145,6 +171,7 @@ function renderTask(taskObj) {
       isFirstCell = false;
     } else {
       cell.style.display = "none";
+      cell.colSpan = 1; // 혹시 재사용 시를 대비해 기본값으로 초기화
     }
 
     remaining--;
