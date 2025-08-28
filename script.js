@@ -1,8 +1,17 @@
+// Firebase SDK import
+import {
+  getFirestore, collection, doc, getDoc, setDoc
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+import { getApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+const db = getFirestore(getApp());
+
+// DOM 요소 가져오기
 const container = document.getElementById("table-container");
 const taskListContainer = document.getElementById("task-list-container");
 const toggleBtn = document.getElementById("toggle");
 
-// Notion 페이지별 독립 저장
+// Notion 페이지별 독립 저장 키
 const urlParams = new URLSearchParams(window.location.search);
 const pageKey = urlParams.get("id") || location.hash.replace("#", "") || "default_page";
 
@@ -10,10 +19,10 @@ const startHour = 6;
 const endHour = 24;
 const minutes = [0, 10, 20, 30, 40, 50];
 
-let tasks = JSON.parse(localStorage.getItem(pageKey) || "[]");
-
+let tasks = []; // Firestore에서 불러올 데이터
 let table, tbody;
 
+// ======================= 테이블 초기화 =======================
 function initTable() {
   table = document.createElement("table");
 
@@ -56,6 +65,7 @@ function initTable() {
   container.appendChild(table);
 }
 
+// ======================= 색상 생성 =======================
 function hashColor(text) {
   let hash = 0;
   for (let i = 0; i < text.length; i++) {
@@ -65,6 +75,7 @@ function hashColor(text) {
   return `hsl(${hue},40%,70%)`;
 }
 
+// ======================= 셀 위치 계산 =======================
 function findCellPos(totalMin, isEnd = false) {
   let hour = Math.floor(totalMin / 60);
   let minute = totalMin % 60;
@@ -88,6 +99,7 @@ function findCellPos(totalMin, isEnd = false) {
   return { hour, index };
 }
 
+// ======================= 할 일 렌더링 =======================
 function renderTask(taskObj) {
   const { task, start, end, color } = taskObj;
   const [sh, sm] = start.split(":").map(Number);
@@ -115,7 +127,7 @@ function renderTask(taskObj) {
   cell.style.background = color || hashColor(task);
   cell.style.display = "";
 
-  // 병합 셀 숨기기
+  // 병합된 셀 숨기기
   for (let i = 1; i < colspan; i++) {
     const idx = startPos.index + i;
     const hr = startPos.hour + Math.floor(idx / totalCols);
@@ -128,7 +140,9 @@ function renderTask(taskObj) {
   }
 }
 
-function saveAndRender() {
+// ======================= 저장 & 렌더링 =======================
+async function saveAndRender() {
+  // 테이블 초기화
   tbody.querySelectorAll("td").forEach(td => {
     td.textContent = "";
     td.style.background = "white";
@@ -138,10 +152,14 @@ function saveAndRender() {
   });
 
   tasks.forEach(renderTask);
-  localStorage.setItem(pageKey, JSON.stringify(tasks));
+
+  // Firestore에 저장
+  await setDoc(doc(collection(db, "timeTracker"), pageKey), { tasks });
+
   renderTaskList();
 }
 
+// ======================= 할 일 목록 표시 =======================
 function renderTaskList() {
   taskListContainer.innerHTML = "";
   tasks.forEach((t, i) => {
@@ -180,8 +198,22 @@ function renderTaskList() {
   });
 }
 
+// ======================= Firestore에서 불러오기 =======================
+async function loadTasks() {
+  const ref = doc(collection(db, "timeTracker"), pageKey);
+  const snap = await getDoc(ref);
+  if (snap.exists()) {
+    tasks = snap.data().tasks || [];
+  } else {
+    tasks = [];
+  }
+  saveAndRender();
+}
+
+// ======================= 이벤트 바인딩 =======================
 toggleBtn.addEventListener("click", () => {
-  taskListContainer.style.display = taskListContainer.style.display === "none" ? "block" : "none";
+  taskListContainer.style.display =
+    taskListContainer.style.display === "none" ? "block" : "none";
 });
 
 document.getElementById("add").addEventListener("click", () => {
@@ -200,5 +232,6 @@ document.getElementById("add").addEventListener("click", () => {
   document.getElementById("task").value = "";
 });
 
+// ======================= 실행 =======================
 initTable();
-saveAndRender();
+loadTasks();
